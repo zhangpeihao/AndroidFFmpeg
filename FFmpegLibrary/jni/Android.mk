@@ -22,12 +22,17 @@ FEATURE_NEON:=
 LIBRARY_PROFILER:=
 LIBRARY_YUV2RGB:=
 MODULE_ENCRYPT:=
+MODULE_STAGEFRIGHT:=
 
 
 #settings
 
 # add support for encryption
 MODULE_ENCRYPT:=yes
+
+# add support for hardware encryption ( we need android source)
+MODULE_STAGEFRIGHT:=yes
+ANDROID_SOURCE = /Users/mac/Documents/AndroidSource
 
 #if armeabi-v7a
 ifeq ($(TARGET_ARCH_ABI), armeabi-v7a)
@@ -80,7 +85,6 @@ ifdef FEATURE_NEON
 	include $(PREBUILT_SHARED_LIBRARY)
 endif
 
-
 #ffmpeg-jni library
 include $(CLEAR_VARS)
 LOCAL_ALLOW_UNDEFINED_SYMBOLS=false
@@ -111,7 +115,22 @@ ifdef MODULE_ENCRYPT
 	LOCAL_STATIC_LIBRARIES += tropicssl
 endif
 
-LOCAL_LDLIBS := -llog -ljnigraphics -lz -lm -g $(LOCAL_PATH)/ffmpeg-build/$(TARGET_ARCH_ABI)/libffmpeg.so
+ifdef MODULE_STAGEFRIGHT
+	LOCAL_SRC_FILES +=  ffstagefright.cpp
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/frameworks/native/include
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/system/core/include
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/frameworks/av/include
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/hardware/libhardware/include
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/frameworks/native/include/media/openmax
+	LOCAL_C_INCLUDES += ${ANDROID_NDK_ROOT}/sources/cxx-stl/stlport/stlport
+	LOCAL_C_INCLUDES += ${LOCAL_PATH}/ffmpeg
+	LOCAL_CPPFLAGS += -D__STDC_CONSTANT_MACROS -Wno-multichar -fno-rtti -fno-exceptions
+	LOCAL_CFLAGS += -DMODULE_STAGEFRIGHT
+	#LOCAL_LDLIBS += -L$(LOCAL_PATH)/tools -lstagefright -lmedia -lutils -lbinder
+	LOCAL_LDLIBS += -L$(ANDROID_SOURCE)/out/target/product/generic/system/lib  -lstagefright -lmedia -lutils -lbinder
+endif
+
+LOCAL_LDLIBS += -llog -ljnigraphics -lz -lm -g $(LOCAL_PATH)/ffmpeg-build/$(TARGET_ARCH_ABI)/libffmpeg.so
 include $(BUILD_SHARED_LIBRARY)
 
 
@@ -140,7 +159,23 @@ ifdef MODULE_ENCRYPT
 	LOCAL_C_INCLUDES += $(LOCAL_PATH)/tropicssl/include
 	LOCAL_STATIC_LIBRARIES += tropicssl
 endif
-LOCAL_LDLIBS := -llog -ljnigraphics -lz -lm -g $(LOCAL_PATH)/ffmpeg-build/$(TARGET_ARCH_ABI)/libffmpeg-neon.so
+
+ifdef MODULE_STAGEFRIGHT
+	LOCAL_SRC_FILES +=  ffstagefright.cpp
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/frameworks/native/include
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/system/core/include
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/frameworks/av/include
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/hardware/libhardware/include
+	LOCAL_C_INCLUDES += $(ANDROID_SOURCE)/frameworks/native/include/media/openmax
+	LOCAL_C_INCLUDES += ${ANDROID_NDK_ROOT}/sources/cxx-stl/stlport/stlport
+	LOCAL_C_INCLUDES += ${LOCAL_PATH}/ffmpeg
+	LOCAL_CPPFLAGS += -D__STDC_CONSTANT_MACROS -Wno-multichar -fno-rtti -fno-exceptions
+	LOCAL_CFLAGS += -DMODULE_STAGEFRIGHT
+	#LOCAL_LDLIBS += -L$(LOCAL_PATH)/tools -lstagefright -lmedia -lutils -lbinder
+	LOCAL_LDLIBS += -L$(ANDROID_SOURCE)/out/target/product/generic/system/lib  -lstagefright -lmedia -lutils -lbinder
+endif
+
+LOCAL_LDLIBS += -llog -ljnigraphics -lz -lm -g $(LOCAL_PATH)/ffmpeg-build/$(TARGET_ARCH_ABI)/libffmpeg-neon.so
 include $(BUILD_SHARED_LIBRARY)
 endif
 

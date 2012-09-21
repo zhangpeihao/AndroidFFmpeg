@@ -54,7 +54,14 @@
 #include "queue.h"
 #include "player.h"
 #include "jni-protocol.h"
+
+#ifdef MODULE_ENCRYPT
 #include "aes-protocol.h"
+#endif
+
+#ifdef MODULE_STAGEFRIGHT
+#include "ffstagefright.h"
+#endif
 
 #define LOG_LEVEL 15
 #define LOG_TAG "player.c"
@@ -106,7 +113,9 @@ void player_print_codec_description(AVCodec *codec) {
 		break;
 	}
 	LOGI(10,
-			"player_print_codec_description id: %d codec: %s, type: %s", codec->id, codec->name, type);
+			"player_print_codec_description"
+			" id: %d codec: %s, long_name: %s, type: %s",
+			codec->id, codec->name, codec->long_name, type);
 }
 
 struct VideoRGBFrameElem {
@@ -720,15 +729,19 @@ int player_decode_video(struct DecoderData * decoder_data, JNIEnv * env,
 
 	LOGI(7, "player_decode_video copying...");
 #ifdef YUV2RGB
-	yuv420_2_rgb565(rgbFrame->data[0], frame->data[0], frame->data[1],
-			frame->data[2], destWidth, destHeight, frame->linesize[0],
-			frame->linesize[1], destWidth << 1, yuv2rgb565_table,
-			player->dither++);
-#else
+	if (ctx->pix_fmt == PIX_FMT_YUV420P) {
+		yuv420_2_rgb565(rgbFrame->data[0], frame->data[0], frame->data[1],
+				frame->data[2], destWidth, destHeight, frame->linesize[0],
+				frame->linesize[1], destWidth << 1, yuv2rgb565_table,
+				player->dither++);
+	} else {
+#endif
 	sws_scale(player->sws_context,
 			(const uint8_t * const *) frame->data,
 			frame->linesize, 0, ctx->height,
 			rgbFrame->data, rgbFrame->linesize);
+#ifdef YUV2RGB
+	}
 #endif
 
 #ifdef SUBTITLES
@@ -1323,7 +1336,15 @@ int player_open_stream(struct Player *player, AVCodecContext * ctx,
 	enum AVCodecID codec_id = ctx->codec_id;
 	LOGI(3, "player_open_stream trying open: %d", codec_id);
 
-	*codec = avcodec_find_decoder(codec_id);
+#ifdef MODULE_STAGEFRIGHT
+	if (codec_id == 28) {
+		*codec = avcodec_find_decoder_by_name("libstagefright_h264");
+	} else {
+#endif
+		*codec = avcodec_find_decoder(codec_id);
+#ifdef MODULE_STAGEFRIGHT
+	}
+#endif
 	if (*codec == NULL) {
 		LOGE(1,
 				"player_set_data_source Could not find codec for id: %d", codec_id);
@@ -1336,8 +1357,7 @@ int player_open_stream(struct Player *player, AVCodecContext * ctx,
 		*codec = NULL;
 		return -ERROR_COULD_NOT_OPEN_VIDEO_CODEC;
 	}
-
-	LOGI(3, "player_open_stream opened: %d", codec_id);
+	LOGI(3, "player_open_stream opened: %d, name: %s, long_name: %s", codec_id, (*codec)->name, (*codec)->long_name);
 	return 0;
 }
 
@@ -2521,6 +2541,10 @@ int jni_player_init(JNIEnv *env, jobject thiz) {
 	register_jni_protocol(player->get_javavm);
 #ifdef MODULE_ENCRYPT
 	register_aes_protocol();
+#endif
+
+#ifdef MODULE_STAGEFRIGHT
+	register_stagefright_codec();
 #endif
 
 	player_print_all_codecs();
