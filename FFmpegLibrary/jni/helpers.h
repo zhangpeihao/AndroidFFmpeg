@@ -19,6 +19,7 @@
 #ifndef HELPERS_H_
 #define HELPERS_H_
 
+#define KX_FORCE_NO_VIDEO
 typedef struct {
     const char* name;
     const char* signature;

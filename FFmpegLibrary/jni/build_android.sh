@@ -255,8 +255,7 @@ EOF
 	    --enable-static \
 	    --enable-runtime-cpudetect \
 	    --extra-ldflags="-Wl,-rpath-link=$PLATFORM/usr/lib -L$PLATFORM/usr/lib  -nostdlib -lc -lm -ldl -llog -L$PREFIX/lib" \
-	    --extra-cflags="-I$PREFIX/include" \
-	    --disable-everything \
+	    --extra-cflags="-I$PREFIX/include -DKX_FORCE_NO_VIDEO" \
 	    --enable-libass \
 	    --enable-libvo-aacenc \
 	    --enable-libvo-amrwbenc \
@@ -331,6 +330,9 @@ EOF
 	    --enable-version3 \
 	    --enable-memalign-hack \
 	    --enable-asm \
+	    --enable-protocol=librtmp \
+	    --enable-protocol=librtmpt \
+	    --enable-decoder=nellymoser \
 	    $ADDITIONAL_CONFIGURE_FLAG \
 	    || exit 1
 	make clean || exit 1
@@ -357,13 +359,19 @@ ADDITIONAL_CONFIGURE_FLAG=
 SONAME=libffmpeg.so
 PREBUILT=$NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$OS-x86
 PLATFORM_VERSION=android-5
-build_amr
-build_aac
-build_fribidi
-build_freetype2
-build_ass
+#build_amr
+#build_aac
+#build_fribidi
+#build_freetype2
+#build_ass
 build_ffmpeg
 build_one
+ndk-build
+cd ../libs
+rm ./ffmpeg.armeabi.tar.gz
+tar zcvf ./ffmpeg.armeabi.tar.gz ./armeabi
+cd -
+exit
 
 #x86
 EABIARCH=i686-linux-android

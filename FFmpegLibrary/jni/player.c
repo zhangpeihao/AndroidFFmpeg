@@ -57,7 +57,7 @@
 #include "aes-protocol.h"
 
 #define FFMPEG_LOG_LEVEL AV_LOG_DEBUG
-#define LOG_LEVEL 2
+#define LOG_LEVEL 4
 #define LOG_TAG "player.c"
 #define LOGI(level, ...) if (level <= LOG_LEVEL) {__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__);}
 #define LOGE(level, ...) if (level <= LOG_LEVEL) {__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__);}
@@ -1138,6 +1138,9 @@ void * player_read_from_stream(void *data) {
 		int ret = av_read_frame(player->input_format_ctx, pkt);
 		if (ret < 0) {
 			pthread_mutex_lock(&player->mutex_queue);
+#ifdef KX_FORCE_NO_VIDEO
+                        usleep(1000);
+#else
 			LOGI(3, "player_read_from_stream stream end");
 			queue = player->packets[player->video_stream_no];
 			packet_data = queue_push_start_already_locked(queue,
@@ -1158,7 +1161,7 @@ void * player_read_from_stream(void *data) {
 			packet_data->end_of_stream = 1;
 			LOGI(3, "player_read_from_stream sending end_of_stream packet");
 			queue_push_finish_already_locked(queue, &player->mutex_queue, &player->cond_queue, to_write);
-
+#endif
 			for (;;) {
 				if (player->stop)
 					goto exit_loop;
@@ -1197,7 +1200,7 @@ void * player_read_from_stream(void *data) {
 		}
 
 		push_start:
-		LOGI(10, "player_read_from_stream waiting for queue");
+		LOGI(3, "player_read_from_stream waiting for queue");
 		packet_data = queue_push_start_already_locked(queue,
 				&player->mutex_queue, &player->cond_queue, &to_write,
 				(QueueCheckFunc) player_read_from_stream_check_func, player,
@@ -1223,6 +1226,7 @@ void * player_read_from_stream(void *data) {
 			goto exit_loop;
 		}
 
+		LOGI(3, "player_read_from_stream push finish");
 		queue_push_finish(queue, &player->mutex_queue, &player->cond_queue,
 				to_write);
 
@@ -1250,6 +1254,7 @@ void * player_read_from_stream(void *data) {
 		goto detach_current_thread;
 
 		seek_loop:
+#ifndef KX_FORCE_NO_VIDEO
 		// setting stream thet will be used as a base for seeking
 		seek_input_stream_number =
 				player->input_stream_numbers[player->video_stream_no];
@@ -1273,7 +1278,7 @@ void * player_read_from_stream(void *data) {
 		}
 
 		LOGI(3, "player_read_from_stream seeking success");
-
+#endif
 		// request stream to flush
 		player_assign_to_no_boolean_array(player, player->flush_streams, TRUE);
 		LOGI(3, "player_read_from_stream flushing audio")
@@ -1429,6 +1434,9 @@ void player_free_video_rgb_frame(struct State *state,
 }
 
 void *player_fill_video_rgb_frame(struct DecoderState *decoder_state) {
+#ifdef KX_FORCE_NO_VIDEO
+        return NULL;
+#endif
 	struct Player *player = decoder_state->player;
 	JNIEnv *env = decoder_state->env;
 	jobject thiz = decoder_state->thiz;
@@ -1888,6 +1896,9 @@ int player_prepare_rgb_frames(struct DecoderState *decoder_state, struct State *
 }
 
 int player_preapre_sws_context(struct Player *player) {
+#ifdef KX_FORCE_NO_VIDEO
+        return 0;
+#endif
 	AVCodecContext * ctx = player->input_codec_ctxs[player->video_stream_no];
 
 	int destWidth = ctx->width;
@@ -2187,6 +2198,9 @@ void player_prepare_ass_decoder_free(struct Player *player) {
 }
 
 int player_prepare_ass_decoder(struct Player* player, const char *font_path) {
+#ifdef KX_FORCE_NO_VIDEO
+        return 0;
+#endif
 	AVCodecContext* ctx = player->input_codec_ctxs[player->video_stream_no];
 	player->ass_library = ass_library_init();
 	if (player->ass_library == NULL)
@@ -2270,7 +2284,7 @@ int player_set_data_source(struct State *state, const char *file_path,
 	struct Player *player = state->player;
 	int err = ERROR_NO_ERROR;
 	int i;
-
+        LOGE(0, "player_set_data_source() 1\n");
 	pthread_mutex_lock(&player->mutex_operation);
 
 	player_stop_without_lock(state);
@@ -2315,12 +2329,15 @@ int player_set_data_source(struct State *state, const char *file_path,
 			player)) < 0)
 		goto error;
 
+#ifndef KX_FORCE_NO_VIDEO
 	if ((player->video_stream_no = player_find_stream(player,
 			AVMEDIA_TYPE_VIDEO, video_stream_no)) < 0) {
 		err = player->video_stream_no;
 		goto error;
 	}
-
+#else
+        player->video_stream_no = -2;
+#endif
 	if ((player->audio_stream_no = player_find_stream(player,
 			AVMEDIA_TYPE_AUDIO, audio_stream_no)) < 0) {
 		err = player->audio_stream_no;
@@ -2348,11 +2365,13 @@ int player_set_data_source(struct State *state, const char *file_path,
 	if ((err = player_alloc_queues(state)) < 0)
 		goto error;
 
+#ifndef KX_FORCE_NO_VIDEO
 	struct DecoderState video_decoder_state = { stream_no
 			: player->video_stream_no, player: player, env:state->env, thiz
 			: state->thiz };
 	if ((err = player_prepare_rgb_frames(&video_decoder_state, state)) < 0)
 		goto error;
+#endif
 #ifdef SUBTITLES
 	if (player->subtitle_stream_no >= 0) {
 		struct DecoderState subtitle_decoder_state = { stream_no
@@ -2362,13 +2381,16 @@ int player_set_data_source(struct State *state, const char *file_path,
 			goto error;
 	}
 #endif // SUBTITLES
+#ifndef KX_FORCE_NO_VIDEO
 	if ((err = player_preapre_sws_context(player)) < 0)
 		goto error;
-
+#endif
 	if ((err = player_create_audio_track(player, state)) < 0)
 		goto error;
 
+#ifndef KX_FORCE_NO_VIDEO
 	player_get_video_duration(player);
+#endif
 	player_update_time(state, 0.0);
 
 	player_play_prepare(player);
@@ -2805,6 +2827,9 @@ void jni_player_render_frame_stop(JNIEnv *env, jobject thiz) {
 }
 
 jobject jni_player_render_frame(JNIEnv *env, jobject thiz) {
+#ifdef KX_FORCE_NO_VIDEO
+        return NULL;
+#endif
 	struct Player * player = player_get_player_field(env, thiz);
 	struct State state = { env: env, player: player, thiz: thiz };
 	int interrupt_ret;
