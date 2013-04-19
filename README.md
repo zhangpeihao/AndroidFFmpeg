@@ -16,6 +16,8 @@ or
 
 	git clone https://github.com/appunite/AndroidFFmpeg.git
 
+Before merge into main project, clone from https://github.com/zhangpeihao/AndroidFFmpeg.git
+
 ## License
 Copyright (C) 2012 Appunite.com
 Licensed under the Apache License, Verision 2.0
