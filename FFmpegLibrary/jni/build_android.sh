@@ -330,8 +330,8 @@ EOF
 	    --enable-version3 \
 	    --enable-memalign-hack \
 	    --enable-asm \
-	    --enable-protocol=librtmp \
-	    --enable-protocol=librtmpt \
+	    --enable-protocol=rtmp \
+	    --enable-protocol=rtmpt \
 	    --enable-decoder=nellymoser \
 	    $ADDITIONAL_CONFIGURE_FLAG \
 	    || exit 1
@@ -359,19 +359,13 @@ ADDITIONAL_CONFIGURE_FLAG=
 SONAME=libffmpeg.so
 PREBUILT=$NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$OS-x86
 PLATFORM_VERSION=android-5
-#build_amr
-#build_aac
-#build_fribidi
-#build_freetype2
-#build_ass
+build_amr
+build_aac
+build_fribidi
+build_freetype2
+build_ass
 build_ffmpeg
 build_one
-ndk-build
-cd ../libs
-rm ./ffmpeg.armeabi.tar.gz
-tar zcvf ./ffmpeg.armeabi.tar.gz ./armeabi
-cd -
-exit
 
 #x86
 EABIARCH=i686-linux-android
