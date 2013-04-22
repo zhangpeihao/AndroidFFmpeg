@@ -19,6 +19,8 @@
 #ifndef BLEND_H_
 #define BLEND_H_
 
+#ifdef SUBTITLES
+
 #include <libavcodec/avcodec.h>
 #include <ass/ass.h>
 
@@ -26,5 +28,6 @@ void blend_ass_image(AVPicture *dest, const ASS_Image *image, int imgw,
 		int imgh, enum PixelFormat pixel_format);
 void blend_subrect_rgb(AVPicture *dest, const AVSubtitleRect *rect, int imgw,
 		int imgh, enum PixelFormat pixel_format);
+#endif
 
 #endif /* BLEND_H_ */

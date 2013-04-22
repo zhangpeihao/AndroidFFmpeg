@@ -256,9 +256,7 @@ EOF
 	    --enable-runtime-cpudetect \
 	    --extra-ldflags="-Wl,-rpath-link=$PLATFORM/usr/lib -L$PLATFORM/usr/lib  -nostdlib -lc -lm -ldl -llog -L$PREFIX/lib" \
 	    --extra-cflags="-I$PREFIX/include -DKX_FORCE_NO_VIDEO" \
-	    --enable-libass \
 	    --enable-libvo-aacenc \
-	    --enable-libvo-amrwbenc \
 	    --enable-hwaccel=h264_vaapi \
 	    --enable-hwaccel=h264_vaapi \
 	    --enable-hwaccel=h264_dxva2 \
@@ -329,7 +327,6 @@ EOF
 	    --enable-nonfree \
 	    --enable-version3 \
 	    --enable-memalign-hack \
-	    --enable-asm \
 	    --enable-protocol=rtmp \
 	    --enable-protocol=rtmpt \
 	    --enable-decoder=nellymoser \
@@ -344,7 +341,7 @@ EOF
 function build_one {
 	cd ffmpeg
 	PLATFORM=$NDK/platforms/$PLATFORM_VERSION/arch-$ARCH/
-	$PREBUILT/bin/$EABIARCH-ld -rpath-link=$PLATFORM/usr/lib -L$PLATFORM/usr/lib -L$PREFIX/lib  -soname $SONAME -shared -nostdlib  -z,noexecstack -Bsymbolic --whole-archive --no-undefined -o $OUT_LIBRARY -lavcodec -lavformat -lavresample -lavutil -lswresample -lass -lfreetype -lfribidi -lswscale -lvo-aacenc -lvo-amrwbenc -lc -lm -lz -ldl -llog  --warn-once  --dynamic-linker=/system/bin/linker -zmuldefs $PREBUILT/lib/gcc/$EABIARCH/4.4.3/libgcc.a || exit 1
+	$PREBUILT/bin/$EABIARCH-ld -rpath-link=$PLATFORM/usr/lib -L$PLATFORM/usr/lib -L$PREFIX/lib  -soname $SONAME -shared -nostdlib  -z,noexecstack -Bsymbolic --whole-archive --no-undefined -o $OUT_LIBRARY -lavcodec -lavformat -lavresample -lavutil -lswresample -lswscale -lvo-aacenc -lc -lm -lz -ldl -llog  --warn-once  --dynamic-linker=/system/bin/linker -zmuldefs $PREBUILT/lib/gcc/$EABIARCH/4.4.3/libgcc.a || exit 1
 	cd ..
 }
 
@@ -358,15 +355,15 @@ OUT_LIBRARY=$PREFIX/libffmpeg.so
 ADDITIONAL_CONFIGURE_FLAG=
 SONAME=libffmpeg.so
 PREBUILT=$NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$OS-x86
-PLATFORM_VERSION=android-5
-build_amr
+PLATFORM_VERSION=android-9
+#build_amr
 build_aac
-build_fribidi
-build_freetype2
-build_ass
+#build_fribidi
+#build_freetype2
+#build_ass
 build_ffmpeg
 build_one
-
+#exit
 #x86
 EABIARCH=i686-linux-android
 ARCH=x86
@@ -377,11 +374,11 @@ ADDITIONAL_CONFIGURE_FLAG=--disable-asm
 SONAME=libffmpeg.so
 PREBUILT=$NDK/toolchains/x86-4.4.3/prebuilt/$OS-x86
 PLATFORM_VERSION=android-9
-build_amr
+#build_amr
 build_aac
-build_fribidi
-build_freetype2
-build_ass
+#build_fribidi
+#build_freetype2
+#build_ass
 build_ffmpeg
 build_one
 
@@ -395,11 +392,11 @@ ADDITIONAL_CONFIGURE_FLAG="--disable-mips32r2"
 SONAME=libffmpeg.so
 PREBUILT=$NDK/toolchains/mipsel-linux-android-4.4.3/prebuilt/$OS-x86
 PLATFORM_VERSION=android-9
-build_amr
+#build_amr
 build_aac
-build_fribidi
-build_freetype2
-build_ass
+#build_fribidi
+#build_freetype2
+#build_ass
 build_ffmpeg
 build_one
 
@@ -413,12 +410,12 @@ OUT_LIBRARY=$PREFIX/libffmpeg.so
 ADDITIONAL_CONFIGURE_FLAG=
 SONAME=libffmpeg.so
 PREBUILT=$NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$OS-x86
-PLATFORM_VERSION=android-5
-build_amr
+PLATFORM_VERSION=android-9
+#build_amr
 build_aac
-build_fribidi
-build_freetype2
-build_ass
+#build_fribidi
+#build_freetype2
+#build_ass
 build_ffmpeg
 build_one
 
@@ -433,10 +430,17 @@ ADDITIONAL_CONFIGURE_FLAG=--enable-neon
 SONAME=libffmpeg-neon.so
 PREBUILT=$NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$OS-x86
 PLATFORM_VERSION=android-9
-build_amr
+#build_amr
 build_aac
-build_fribidi
-build_freetype2
-build_ass
+#build_fribidi
+#build_freetype2
+#build_ass
 build_ffmpeg
 build_one
+
+ndk-build
+cd ..
+rm ./libs.tar.gz
+tar zcvf ./libs.tar.gz ./libs
+cd -
+

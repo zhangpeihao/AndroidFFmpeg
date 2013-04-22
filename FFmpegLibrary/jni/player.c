@@ -66,7 +66,7 @@
 #define FALSE 0
 #define TRUE (!(FALSE))
 
-#define SUBTITLES
+//#define SUBTITLES
 
 #ifdef SUBTITLES
 #include "blend.h"
@@ -1137,6 +1137,8 @@ void * player_read_from_stream(void *data) {
 	for (;;) {
 		int ret = av_read_frame(player->input_format_ctx, pkt);
 		if (ret < 0) {
+
+			LOGI(3, "11111111111111111");
 			pthread_mutex_lock(&player->mutex_queue);
 #ifdef KX_FORCE_NO_VIDEO
                         usleep(1000);
@@ -1162,6 +1164,7 @@ void * player_read_from_stream(void *data) {
 			LOGI(3, "player_read_from_stream sending end_of_stream packet");
 			queue_push_finish_already_locked(queue, &player->mutex_queue, &player->cond_queue, to_write);
 #endif
+
 			for (;;) {
 				if (player->stop)
 					goto exit_loop;
