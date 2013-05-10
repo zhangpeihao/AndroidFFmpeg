@@ -57,7 +57,7 @@
 #include "aes-protocol.h"
 
 #define FFMPEG_LOG_LEVEL AV_LOG_DEBUG
-#define LOG_LEVEL 4
+#define LOG_LEVEL 0
 #define LOG_TAG "player.c"
 #define LOGI(level, ...) if (level <= LOG_LEVEL) {__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__);}
 #define LOGE(level, ...) if (level <= LOG_LEVEL) {__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__);}
@@ -2311,6 +2311,11 @@ int player_set_data_source(struct State *state, const char *file_path,
 	}
 #endif // SUBTITLES
 
+#ifdef KX_FORCE_NO_VIDEO
+        // Append no_video parameters
+        av_dict_set(&dictionary, "flv_no_video", "yes", 0);
+        av_dict_set(&dictionary, "rtmp_no_video", "yes", 0);
+#endif
 	// initial setup
 	player->out_format = PIX_FMT_RGB565;
 	player->pause = TRUE;
@@ -2444,6 +2449,9 @@ int player_get_next_frame(int current_frame, int max_frame) {
 
 void jni_player_seek(JNIEnv *env, jobject thiz, jint position) {
 	struct Player *player = player_get_player_field(env, thiz);
+	if (player == NULL || env == NULL || player->audio_track == NULL) {
+		return;
+	}
 	pthread_mutex_lock(&player->mutex_operation);
 
 	if (!player->playing) {
@@ -2464,6 +2472,9 @@ void jni_player_seek(JNIEnv *env, jobject thiz, jint position) {
 
 void jni_player_pause(JNIEnv *env, jobject thiz) {
 	struct Player * player = player_get_player_field(env, thiz);
+	if (player == NULL || env == NULL || player->audio_track == NULL) {
+		return;
+	}
 
 	pthread_mutex_lock(&player->mutex_operation);
 
@@ -2496,6 +2507,10 @@ void jni_player_pause(JNIEnv *env, jobject thiz) {
 void jni_player_resume(JNIEnv *env, jobject thiz) {
 	struct Player * player = player_get_player_field(env, thiz);
 	pthread_mutex_lock(&player->mutex_operation);
+
+	if (player == NULL || env == NULL || player->audio_track == NULL) {
+		return;
+	}
 
 	if (!player->playing) {
 		LOGI(1, "jni_player_resume could not pause while not playing");
@@ -2987,17 +3002,29 @@ void jni_player_release_frame(JNIEnv *env, jobject thiz) {
 
 void jni_player_stop(JNIEnv *env, jobject thiz) {
 #ifdef PROFILER
+LOGI(4, "jni_player_stop 1");
 	moncleanup();
 #endif
 
+LOGI(4, "jni_player_stop 2");
 	struct Player * player = player_get_player_field(env, thiz);
 	struct State state;
+	if (player == NULL || env == NULL || player->audio_track == NULL) {
+		return;
+	}
 
+LOGI(4, "jni_player_stop 3");
+	// Stop audio
+	(*env)->CallVoidMethod(env, player->audio_track,
+			player->audio_track_stop_method);
+
+LOGI(4, "jni_player_stop 4");
 	state.player = player;
 	state.env = env;
 	state.thiz = thiz;
 
 	player_stop(&state);
+LOGI(4, "jni_player_stop 5");
 }
 
 int jni_player_get_video_duration(JNIEnv *env, jobject thiz) {

@@ -27,7 +27,7 @@ MODULE_ENCRYPT:=
 #settings
 
 # add support for encryption
-MODULE_ENCRYPT:=yes
+#MODULE_ENCRYPT:=yes
 
 #if armeabi-v7a
 ifeq ($(TARGET_ARCH_ABI), armeabi-v7a)

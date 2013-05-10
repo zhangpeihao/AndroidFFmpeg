@@ -252,66 +252,36 @@ EOF
 	    --sysroot=$PLATFORM \
 	    --extra-cflags=" -O3 -fpic -DANDROID -DHAVE_SYS_UIO_H=1 -Dipv6mr_interface=ipv6mr_ifindex -fasm -Wno-psabi -fno-short-enums  -fno-strict-aliasing -finline-limit=300 $OPTIMIZE_CFLAGS " \
 	    --disable-shared \
+            --disable-everything \
+            --disable-encoders \
+            --disable-decoders \
+            --disable-muxers \
+	    --disable-avdevice \
+	    --disable-avfilter \
+            --disable-demuxers \
+            --disable-debug \
+            --disable-logging \
 	    --enable-static \
 	    --enable-runtime-cpudetect \
 	    --extra-ldflags="-Wl,-rpath-link=$PLATFORM/usr/lib -L$PLATFORM/usr/lib  -nostdlib -lc -lm -ldl -llog -L$PREFIX/lib" \
 	    --extra-cflags="-I$PREFIX/include -DKX_FORCE_NO_VIDEO" \
 	    --enable-libvo-aacenc \
+	    --enable-protocol=tcp \
 	    --enable-hwaccel=h264_vaapi \
 	    --enable-hwaccel=h264_vaapi \
 	    --enable-hwaccel=h264_dxva2 \
-	    --enable-hwaccel=mpeg4_vaapi \
-	    --enable-demuxer=mov \
 	    --enable-demuxer=h264 \
-	    --enable-demuxer=mpegvideo \
-	    --enable-demuxer=h263 \
-	    --enable-demuxer=mpegps \
-	    --enable-demuxer=mjpeg \
-	    --enable-demuxer=rtsp \
-	    --enable-demuxer=rtp \
-	    --enable-demuxer=hls \
-	    --enable-demuxer=matroska \
-	    --enable-muxer=rtsp \
-	    --enable-muxer=mp4 \
-	    --enable-muxer=mov \
-	    --enable-muxer=mjpeg \
-	    --enable-muxer=matroska \
-	    --enable-protocol=crypto \
-	    --enable-protocol=jni \
-	    --enable-protocol=file \
-	    --enable-protocol=rtp \
-	    --enable-protocol=tcp \
-	    --enable-protocol=udp \
-	    --enable-protocol=applehttp \
-	    --enable-protocol=hls \
-	    --enable-protocol=http \
-	    --enable-decoder=xsub \
-	    --enable-decoder=jacosub \
-	    --enable-decoder=dvdsub \
-	    --enable-decoder=dvbsub \
-	    --enable-decoder=subviewer \
-	    --enable-decoder=rawvideo \
-	    --enable-encoder=rawvideo \
-	    --enable-decoder=mjpeg \
-	    --enable-encoder=mjpeg \
-	    --enable-decoder=h263 \
-	    --enable-decoder=mpeg4 \
-	    --enable-encoder=mpeg4 \
 	    --enable-decoder=h264 \
-	    --enable-encoder=h264 \
-	    --enable-decoder=aac \
-	    --enable-encoder=aac \
 	    --enable-parser=h264 \
-	    --enable-encoder=mp2 \
-	    --enable-decoder=mp2 \
-	    --enable-encoder=libvo_amrwbenc \
-	    --enable-decoder=amrwb \
-	    --enable-muxer=mp2 \
-	    --enable-decoders \
-	    --enable-encoders \
-	    --enable-parsers \
+	    --enable-decoder=aac \
+            --enable-decoder=flv \
+            --enable-encoder=flv \
+	    --enable-demuxer=flv \
+	    --enable-muxer=flv \
+	    --enable-protocol=rtmp \
+	    --enable-protocol=rtmpt \
+	    --enable-decoder=nellymoser \
 	    --enable-hwaccels \
-	    --enable-muxers \
 	    --enable-avformat \
 	    --enable-avcodec \
 	    --enable-avresample \
@@ -322,14 +292,9 @@ EOF
 	    --disable-ffplay \
 	    --disable-ffprobe \
 	    --disable-ffserver \
-	    --disable-avfilter \
-	    --disable-avdevice \
 	    --enable-nonfree \
 	    --enable-version3 \
 	    --enable-memalign-hack \
-	    --enable-protocol=rtmp \
-	    --enable-protocol=rtmpt \
-	    --enable-decoder=nellymoser \
 	    $ADDITIONAL_CONFIGURE_FLAG \
 	    || exit 1
 	make clean || exit 1
@@ -363,7 +328,7 @@ build_aac
 #build_ass
 build_ffmpeg
 build_one
-#exit
+
 #x86
 EABIARCH=i686-linux-android
 ARCH=x86
